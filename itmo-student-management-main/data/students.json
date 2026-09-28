@@ -1,0 +1,13 @@
+[
+    {
+        "id": 1,
+        "fullName": "Иванов Иван",
+        "group": "P3120",
+        "isuId": 505115,
+        "dormitoryNumber": 8,
+        "roomNumber": 777,
+        "moveInDate": "2026-09-11",
+        "isForeign": false,
+        "notes": "Тестовый студент"
+    }
+]
