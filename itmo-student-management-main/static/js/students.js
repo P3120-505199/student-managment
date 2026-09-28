@@ -1,16 +1,5 @@
 const studentsTableBody = document.getElementById("studentsTableBody");
 
-
-function formatDate(dateString) {
-    const parts = dateString.split("-");
-
-    const year = parts[0];
-    const month = parts[1];
-    const day = parts[2];
-
-    return day + "." + month + "." + year;
-}
-
 const filterGroupInput = document.getElementById("filterGroup");
 const filterDormitoryInput = document.getElementById("filterDormitory");
 const filterIsForeignSelect = document.getElementById("filterIsForeign");
@@ -18,7 +7,11 @@ const applyFiltersButton = document.getElementById("applyFilters");
 const resetFiltersButton = document.getElementById("resetFilters");
 
 
-function formatDate(dateString) { /* ... без изменений ... */ }
+function formatDate(dateString) {
+    const parts = dateString.split("-");
+
+    return parts[2] + "." + parts[1] + "." + parts[0];
+}
 
 
 function readFilters() {
@@ -60,14 +53,18 @@ function buildQueryString(filters) {
 }
 
 
-async function loadStudents(filters = {}) {
-    try {
-        const students = await getStudents(filters);
+function createCell(text) {
+    const cell = document.createElement("td");
+    cell.textContent = text;
+    return cell;
+}
 
-        renderStudents(students);
-    } catch (error) {
-        console.error("Ошибка загрузки студентов:", error);
-    }
+
+function createActionButton(label, onClick) {
+    const button = document.createElement("button");
+    button.textContent = label;
+    button.addEventListener("click", onClick);
+    return button;
 }
 
 
@@ -75,8 +72,57 @@ function renderStudents(students) {
     studentsTableBody.textContent = "";
 
     students.forEach(function (student) {
-        // ... тот же код построения строки, что и раньше ...
+        const row = document.createElement("tr");
+
+        row.appendChild(createCell(student.fullName));
+        row.appendChild(createCell(student.group));
+        row.appendChild(createCell(student.isuId));
+        row.appendChild(createCell(student.dormitoryNumber));
+        row.appendChild(createCell(student.roomNumber));
+        row.appendChild(createCell(formatDate(student.moveInDate)));
+
+        const actionsCell = document.createElement("td");
+        const actions = document.createElement("div");
+        actions.classList.add("actions");
+
+        actions.appendChild(createActionButton("Подробнее", function () {
+            window.location.href = "student-details.html?id=" + student.id;
+        }));
+
+        actions.appendChild(createActionButton("Редактировать", function () {
+            window.location.href = "student-form.html?id=" + student.id;
+        }));
+
+        actions.appendChild(createActionButton("Удалить", async function () {
+            const shouldDelete = confirm("Удалить студента " + student.fullName + "?");
+
+            if (!shouldDelete) {
+                return;
+            }
+
+            try {
+                await deleteStudent(student.id);
+                await loadStudents(readFilters());
+            } catch (error) {
+                console.error("Ошибка удаления студента:", error);
+            }
+        }));
+
+        actionsCell.appendChild(actions);
+        row.appendChild(actionsCell);
+
+        studentsTableBody.appendChild(row);
     });
+}
+
+
+async function loadStudents(filters = {}) {
+    try {
+        const students = await getStudents(filters);
+        renderStudents(students);
+    } catch (error) {
+        console.error("Ошибка загрузки студентов:", error);
+    }
 }
 
 
@@ -84,7 +130,6 @@ function onApplyFilters() {
     const filters = readFilters();
     const query = buildQueryString(filters);
 
-    // Обновляем URL, чтобы запрос был виден и его можно было переслать
     const newUrl = query
         ? window.location.pathname + "?" + query
         : window.location.pathname;
@@ -110,10 +155,13 @@ function initFilters() {
     applyFiltersButton.addEventListener("click", onApplyFilters);
     resetFiltersButton.addEventListener("click", onResetFilters);
 
-    // При загрузке страницы читаем фильтры из URL (если есть)
     const params = new URLSearchParams(window.location.search);
 
     filterGroupInput.value = params.get("group") || "";
     filterDormitoryInput.value = params.get("dormitoryNumber") || "";
     filterIsForeignSelect.value = params.get("isForeign") || "";
 }
+
+
+initFilters();
+loadStudents(readFilters());
