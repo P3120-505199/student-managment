@@ -1,4 +1,4 @@
-const API_URL = "/api/requests";   // ← относительный путь, без http://127.0.0.1:5000
+const API_URL = "/api/requests"; 
 
 async function getStudents(filters = {}) {
     const params = new URLSearchParams();
